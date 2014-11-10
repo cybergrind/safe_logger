@@ -6,6 +6,8 @@ This handler is designed to provide correct log files rotation when multiple pro
 
 Heavilly tested on production systems with up to 50 writers.
 
+**Caveat**: this logger has been extracted from other system, so can have issues cause by copy-pasting
+
 ## Pitfalls
 
 * Naive aproach fails because concurrent processes do independent rollovers and finally you will have zero-lenght log file: so we need locking
