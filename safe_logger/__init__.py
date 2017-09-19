@@ -1,8 +1,8 @@
-import os
-import time
 import fcntl
 import logging
 import logging.handlers
+import os
+import time
 
 
 class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
@@ -46,13 +46,6 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
             self._lockf.close()
             return
 
-        # check if file is same
-        _tmp_f = open(self.baseFilename, 'r')
-        is_same = self.is_same_file(self.stream, _tmp_f)
-        _tmp_f.close()
-
-        if self.stream:
-            self.stream.close()
         # get the time that this sequence started at and make it a TimeTuple
         t = self.rolloverAt - self.interval
         if self.utc:
@@ -61,8 +54,20 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
             timeTuple = time.localtime(t)
         dfn = self.baseFilename + "." + time.strftime(self.suffix, timeTuple)
 
-        if is_same and not os.path.exists(dfn):
-            os.rename(self.baseFilename, dfn)
+        # check if file is same
+        try:
+            _tmp_f = open(self.baseFilename, 'r')
+            is_same = self.is_same_file(self.stream, _tmp_f)
+            _tmp_f.close()
+
+            if self.stream:
+                self.stream.close()
+            if is_same and not os.path.exists(dfn):
+                os.rename(self.baseFilename, dfn)
+        except ValueError:
+            # ValueError: I/O operation on closed file
+            is_same = False
+
         if self.backupCount > 0:
             for s in self.getFilesToDelete():
                 os.remove(s)
