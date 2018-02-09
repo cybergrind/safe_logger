@@ -6,6 +6,8 @@ import time
 
 
 class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
+    def __init__(filename, when='midnight', backupCount=30, **kwargs):
+        super().__init__(filename, when=when, backupCount=backupCount, **kwargs)
 
     def _open(self):
         if getattr(self, '_lockf', None) and not self._lockf.closed:
@@ -20,8 +22,12 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
                 self._release_lock()
 
     def _aquire_lock(self):
-        self._lockf = open(self.baseFilename + '_rotating_lock', 'a')
-        fcntl.flock(self._lockf,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        try:
+            self._lockf = open(self.baseFilename + '_rotating_lock', 'a')
+        except PermissionError:
+            name = './{}_rotating_lock'.format(os.path.basename(self.baseFilename))
+            self._lockf = open(name, 'a')
+        fcntl.flock(self._lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     def _release_lock(self):
         self._lockf.close()
