@@ -6,7 +6,7 @@ import time
 
 
 class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
-    def __init__(filename, when='midnight', backupCount=30, **kwargs):
+    def __init__(self, filename, when='midnight', backupCount=30, **kwargs):
         super().__init__(filename, when=when, backupCount=backupCount, **kwargs)
 
     def _open(self):
