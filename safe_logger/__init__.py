@@ -2,6 +2,7 @@ import fcntl
 import logging
 import logging.handlers
 import os
+import random
 import time
 
 
@@ -16,8 +17,9 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
             try:
                 self._aquire_lock()
                 return logging.handlers.TimedRotatingFileHandler._open(self)
-            except IOError:
+            except (IOError, BlockingIOError):
                 self._lockf.close()
+                time.sleep(random.random())
             finally:
                 self._release_lock()
 
@@ -33,7 +35,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         self._lockf.close()
 
     def is_same_file(self, file1, file2):
-        '''check is files are same by comparing inodes'''
+        """check is files are same by comparing inodes"""
         return os.fstat(file1.fileno()).st_ino == os.fstat(file2.fileno()).st_ino
 
     def doRollover(self):
@@ -47,7 +49,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
 
         try:
             self._aquire_lock()
-        except IOError:
+        except (IOError, BlockingIOError):
             # cant aquire lock, return
             self._lockf.close()
             return
