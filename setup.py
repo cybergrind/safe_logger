@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version = '1.5.6'
+version = '1.5.7'
 
 setup(name='safe_logger',
       version=version,

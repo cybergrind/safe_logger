@@ -60,7 +60,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
             self._aquire_lock()
         except (IOError, BlockingIOError):
             # cant aquire lock, return
-            self._lockf.close()
+            self._release_lock()
             return
 
         # get the time that this sequence started at and make it a TimeTuple
