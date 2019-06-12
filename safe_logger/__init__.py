@@ -14,7 +14,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         if getattr(self, '_lockf', None) and not self._lockf.closed:
             return logging.handlers.TimedRotatingFileHandler._open(self)
         while True:
-            self.acquire()
+            logging._acquireLock()
             try:
                 self._aquire_lock()
                 return logging.handlers.TimedRotatingFileHandler._open(self)
@@ -23,7 +23,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
                 time.sleep(random.random())
             finally:
                 self._release_lock()
-                self.release()
+                logging._releaseLock()
 
     def _aquire_lock(self):
         try:
