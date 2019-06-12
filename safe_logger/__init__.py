@@ -14,16 +14,18 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         if getattr(self, '_lockf', None) and not self._lockf.closed:
             return logging.handlers.TimedRotatingFileHandler._open(self)
         logging._acquireLock()
-        while True:
-            try:
-                self._aquire_lock()
-                return logging.handlers.TimedRotatingFileHandler._open(self)
-            except (IOError, BlockingIOError):
-                self._lockf.close()
-                time.sleep(random.random())
-            finally:
-                self._release_lock()
-                logging._releaseLock()
+        try:
+            while True:
+                try:
+                    self._aquire_lock()
+                    return logging.handlers.TimedRotatingFileHandler._open(self)
+                except (IOError, BlockingIOError):
+                    self._lockf.close()
+                    time.sleep(random.random())
+                finally:
+                    self._release_lock()
+        finally:
+            logging._releaseLock()
 
     def _aquire_lock(self):
         try:
