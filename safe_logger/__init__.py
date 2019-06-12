@@ -23,7 +23,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
                     self._aquire_lock()
                     return logging.handlers.TimedRotatingFileHandler._open(self)
                 except (IOError, BlockingIOError):
-                    self._lockf.close()
+                    self._release_lock()
                     time.sleep(random.random())
                 finally:
                     self._release_lock()
@@ -37,6 +37,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         fcntl.flock(self._lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     def _release_lock(self):
+        fcntl.lockf(self._lockf, fcntl.LOCK_UN)
         self._lockf.close()
 
     def is_same_file(self, file1, file2):
