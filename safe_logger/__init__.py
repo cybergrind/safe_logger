@@ -13,8 +13,8 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
     def _open(self):
         if getattr(self, '_lockf', None) and not self._lockf.closed:
             return logging.handlers.TimedRotatingFileHandler._open(self)
+        logging._acquireLock()
         while True:
-            logging._acquireLock()
             try:
                 self._aquire_lock()
                 return logging.handlers.TimedRotatingFileHandler._open(self)
