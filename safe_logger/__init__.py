@@ -4,6 +4,10 @@ import logging.handlers
 import os
 import random
 import time
+import threading
+
+
+_lock = threading.RLock()
 
 
 class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
@@ -13,8 +17,7 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
     def _open(self):
         if getattr(self, '_lockf', None) and not self._lockf.closed:
             return logging.handlers.TimedRotatingFileHandler._open(self)
-        logging._acquireLock()
-        try:
+        with _lock.acquire():
             while True:
                 try:
                     self._aquire_lock()
@@ -24,8 +27,6 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
                     time.sleep(random.random())
                 finally:
                     self._release_lock()
-        finally:
-            logging._releaseLock()
 
     def _aquire_lock(self):
         try:
@@ -50,7 +51,10 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         then we have to get a list of matching filenames, sort them and remove
         the one with the oldest suffix.
         """
+        with _lock.acquire():
+            return self._innerDoRollover()
 
+    def _innerDoRollover(self):
         try:
             self._aquire_lock()
         except (IOError, BlockingIOError):
