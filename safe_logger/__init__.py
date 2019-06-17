@@ -37,8 +37,9 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
         fcntl.flock(self._lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     def _release_lock(self):
-        fcntl.lockf(self._lockf, fcntl.LOCK_UN)
-        self._lockf.close()
+        if not self._lockf.closed:
+            fcntl.lockf(self._lockf, fcntl.LOCK_UN)
+            self._lockf.close()
 
     def is_same_file(self, file1, file2):
         """check is files are same by comparing inodes"""
@@ -73,14 +74,15 @@ class TimedRotatingFileHandlerSafe(logging.handlers.TimedRotatingFileHandler):
 
         # check if file is same
         try:
-            _tmp_f = open(self.baseFilename, 'r')
-            is_same = self.is_same_file(self.stream, _tmp_f)
-            _tmp_f.close()
-
             if self.stream:
-                self.stream.close()
-            if is_same and not os.path.exists(dfn):
-                os.rename(self.baseFilename, dfn)
+                _tmp_f = open(self.baseFilename, 'r')
+                is_same = self.is_same_file(self.stream, _tmp_f)
+                _tmp_f.close()
+
+                if self.stream:
+                    self.stream.close()
+                if is_same and not os.path.exists(dfn):
+                    os.rename(self.baseFilename, dfn)
         except ValueError:
             # ValueError: I/O operation on closed file
             is_same = False
